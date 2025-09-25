@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OML - Bitcoin Collector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d, #404040, #f5f5f0);
+            background-size: 400% 400%;
+            animation: gradientShift 6s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .game-container {
+            width: 1100px;
+            height: 800px;
+            background: rgba(245, 245, 240, 0.98);
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            border: 5px solid #2d2d2d;
+            backdrop-filter: blur(20px);
+        }
+
+        .game-header {
+            background: linear-gradient(90deg, #1a1a1a, #2d2d2d, #1a1a1a);
+            background-size: 300% 100%;
+            animation: headerGradient 4s ease infinite;
+            color: #f5f5f0;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes headerGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .game-title {
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+
+        .btc-logo {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+            position: relative;
+            filter: drop-shadow(2px 2px 4px rgba(45, 45, 45, 0.5));
+        }
+
+        .btc-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .game-title-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #f5f5f0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .scores {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .score, .best-score {
+            font-size: 20px;
+            font-weight: bold;
+            background: rgba(45, 45, 45, 0.25);
+            color: #f5f5f0;
+            padding: 12px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(45, 45, 45, 0.5);
+        }
+
+        .best-score {
+            background: rgba(45, 45, 45, 0.4);
+            border: 2px solid rgba(45, 45, 45, 0.8);
+        }
+
+        .game-area {
+            width: 100%;
+            height: 680px;
+            position: relative;
+            background: linear-gradient(to bottom, 
+                rgba(245, 245, 240, 0.9), 
+                rgba(235, 235, 230, 0.8), 
+                rgba(225, 225, 220, 0.7), 
+                rgba(215, 215, 210, 0.6));
+            overflow: hidden;
+        }
+
+        .cow {
+            width: 150px;
+            height: 150px;
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.08s ease;
+            z-index: 10;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(45, 45, 45, 0.5);
+            border: 4px solid #2d2d2d;
+        }
+
+        .cow img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .coin {
+            width: 70px;
+            height: 70px;
+            position: absolute;
+            border-radius: 50%;
+            border: 4px solid #1a1a1a;
+            box-shadow: 0 4px 15px rgba(45, 45, 45, 0.7);
+            animation: spin 1.5s linear infinite, coinGlow 2s ease-in-out infinite;
+            overflow: hidden;
+            background: #f5f5f0;
+        }
+
+        .coin img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        @keyframes spin {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+        }
+
+        @keyframes coinGlow {
+            0%, 100% { box-shadow: 0 4px 15px rgba(45, 45, 45, 0.7); }
+            50% { box-shadow: 0 4px 25px rgba(45, 45, 45, 0.9); }
+        }
+
+        .start-screen, .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(245, 245, 240, 0.98);
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(20px);
+            border: 4px solid #2d2d2d;
+            z-index: 100;
+            max-width: 600px;
+        }
+
+        .start-screen h2, .game-over h2 {
+            background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 38px;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+
+        .instructions {
+            color: #2d2d2d;
+            font-size: 20px;
+            margin-bottom: 30px;
+            line-height: 1.7;
+        }
+
+        .final-score {
+            font-size: 32px;
+            background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+
+        .best-indicator {
+            color: #2d2d2d;
+            font-size: 18px;
+            margin-top: 10px;
+            font-weight: bold;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .start-btn, .restart-btn {
+            background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+            color: #f5f5f0;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 35px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 25px rgba(45, 45, 45, 0.5);
+            margin: 15px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 35px rgba(45, 45, 45, 0.6);
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(45deg, #2d2d2d, #1a1a1a, #f5f5f0);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle-float 1.5s ease-out forwards;
+        }
+
+        @keyframes particle-float {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--dx), var(--dy)) scale(0);
+            }
+        }
+
+        .lives {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            font-size: 28px;
+            color: #2d2d2d;
+            font-weight: bold;
+            background: rgba(245, 245, 240, 0.95);
+            padding: 15px 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(45, 45, 45, 0.5);
+        }
+
+        .game-info {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            color: #2d2d2d;
+            font-size: 18px;
+            background: rgba(245, 245, 240, 0.95);
+            padding: 15px 20px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(45, 45, 45, 0.5);
+            font-weight: bold;
+        }
+
+        .controls-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #2d2d2d;
+            font-size: 16px;
+            background: rgba(245, 245, 240, 0.9);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            border: 2px solid rgba(45, 45, 45, 0.6);
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: rgba(245, 245, 240, 0.9);
+            font-size: 16px;
+        }
+
+        .footer a {
+            color: #2d2d2d;
+            text-decoration: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .footer a:hover {
+            color: #f5f5f0;
+            text-shadow: 0 0 10px rgba(45, 45, 45, 0.8);
+        }
+
+        .speed-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(245, 245, 240, 0.9);
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: #2d2d2d;
+            border: 2px solid rgba(45, 45, 45, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <div class="game-title">
+                <div class="btc-logo">
+                    <img src="image.png" alt="Logo" />
+                </div>
+                <div class="game-title-text">RialoHQ</div>
+            </div>
+            <div class="scores">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div class="best-score">Best: <span id="bestScore">0</span></div>
+            </div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="lives" id="lives">💎 Lives: 3</div>
+            <div class="game-info">Collect Rialo!</div>
+            <div class="speed-indicator" id="speedIndicator">Speed: 1x</div>
+            
+            <!-- Player character -->
+            <div class="cow" id="cow">
+                <img src="LFG.png" alt="Player Character" id="characterImg"/>
+            </div>
+            
+            <div class="controls-hint">Use ← → arrow keys to move fast!</div>
+        </div>
+        
+        <!-- Start Screen -->
+        <div class="start-screen" id="startScreen">
+            <h2>Welcome to Rialo!</h2>
+            <div class="instructions">
+                Move your character left and right to catch falling Rialo!<br>
+                <strong>Warning:</strong> If any logo hits the ground, you lose a life!<br>
+                Game gets faster as you progress!<br><br>
+                Use <strong>Arrow Keys</strong> for super-fast movement!
+            </div>
+            
+            <button class="start-btn" onclick="startGame()">Start Game</button>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div class="game-over" id="gameOver" style="display: none;">
+            <h2>Game Complete!</h2>
+            <div class="final-score" id="finalScore">Final Score: 0</div>
+            <div class="best-indicator" id="newBestIndicator" style="display: none;">🚀 NEW BEST SCORE! 🚀</div>
+            
+            <button class="restart-btn" onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        Powered by <strong>Clankak</strong> • Follow us: <a href="https://x.com/Clankak" target="_blank">@Clankak</a>
+    </div>
+
+    <script>
+        const cow = document.getElementById('cow');
+        const gameArea = document.getElementById('gameArea');
+        const scoreElement = document.getElementById('score');
+        const bestScoreElement = document.getElementById('bestScore');
+        const livesElement = document.getElementById('lives');
+        const speedIndicator = document.getElementById('speedIndicator');
+        const gameOverElement = document.getElementById('gameOver');
+        const startScreenElement = document.getElementById('startScreen');
+        const finalScoreElement = document.getElementById('finalScore');
+        const newBestIndicator = document.getElementById('newBestIndicator');
+        const characterImg = document.getElementById('characterImg');
+        
+        let cowPosition = 50; // percentage
+        let score = 0;
+        let lives = 3;
+        let gameRunning = false;
+        let gameStarted = false;
+        let coins = [];
+        let coinSpawnInterval;
+        let gameLoopInterval;
+        let bestScore = getCookie('bestScore') || 0;
+        let gameSpeed = 1200; // Starting spawn rate
+        let fallSpeed = 3; // Starting fall speed
+        let currentSpeedMultiplier = 1;
+        
+        // Initialize best score display
+        bestScoreElement.textContent = bestScore;
+        
+        // Cookie functions
+        function setCookie(name, value, days = 365) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+        
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return parseInt(c.substring(nameEQ.length, c.length));
+            }
+            return null;
+        }
+        
+        // Control cow movement - MUCH FASTER
+        function moveCow(direction) {
+            if (!gameRunning) return;
+            
+            if (direction === 'left' && cowPosition > 5) {
+                cowPosition -= 15; // Much faster movement
+            } else if (direction === 'right' && cowPosition < 95) {
+                cowPosition += 15; // Much faster movement
+            }
+            cow.style.left = cowPosition + '%';
+        }
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                moveCow('left');
+            }
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                moveCow('right');
+            }
+        });
+        
+        // Update game speed
+        function updateGameSpeed() {
+            const speedIncrease = Math.floor(score / 50);
+            currentSpeedMultiplier = 1 + (speedIncrease * 0.3);
+            const newFallSpeed = fallSpeed * currentSpeedMultiplier;
+            const newSpawnRate = Math.max(600, gameSpeed - (speedIncrease * 100));
+            
+            speedIndicator.textContent = `Speed: ${currentSpeedMultiplier.toFixed(1)}x`;
+            
+            // Update coin spawn rate
+            if (coinSpawnInterval) {
+                clearInterval(coinSpawnInterval);
+                coinSpawnInterval = setInterval(createCoin, newSpawnRate);
+            }
+        }
+        
+        // Create coin with your logo image
+        function createCoin() {
+            if (!gameRunning) return;
+            
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            
+            // Create an img element for your logo
+            const logoImg = document.createElement('img');
+            logoImg.src = 'rail.jpg'; // Your logo image file
+            logoImg.alt = 'Logo Coin';
+            coin.appendChild(logoImg);
+            
+            const randomPosition = Math.random() * 85 + 7.5;
+            coin.style.left = randomPosition + '%';
+            coin.style.top = '-70px';
+            
+            let coinTop = -70;
+            const currentFallSpeed = fallSpeed * currentSpeedMultiplier;
+            
+            const fallInterval = setInterval(() => {
+                if (!gameRunning) {
+                    clearInterval(fallInterval);
+                    return;
+                }
+                
+                coinTop += currentFallSpeed;
+                coin.style.top = coinTop + 'px';
+                
+                if (coinTop > 640) {
+                    loseLife();
+                    clearInterval(fallInterval);
+                    if (coin.parentNode) {
+                        coin.parentNode.removeChild(coin);
+                    }
+                    coins = coins.filter(c => c.element !== coin);
+                }
+            }, 16);
+            
+            gameArea.appendChild(coin);
+            coins.push({element: coin, interval: fallInterval});
+        }
+        
+        // Lose a life
+        function loseLife() {
+            lives--;
+            livesElement.textContent = `💎 Lives: ${lives}`;
+            
+            if (lives <= 0) {
+                endGame();
+            }
+        }
+        
+        // Check collisions
+        function checkCollisions() {
+            const cowRect = cow.getBoundingClientRect();
+            
+            coins.forEach((coinObj, index) => {
+                const coin = coinObj.element;
+                const coinRect = coin.getBoundingClientRect();
+                
+                if (cowRect.left < coinRect.right &&
+                    cowRect.right > coinRect.left &&
+                    cowRect.top < coinRect.bottom &&
+                    cowRect.bottom > coinRect.top) {
+                    
+                    score += 10;
+                    scoreElement.textContent = score;
+                    
+                    // Update speed every 50 points
+                    if (score % 50 === 0) {
+                        updateGameSpeed();
+                    }
+                    
+                    createParticles(coinRect.left + coinRect.width/2, coinRect.top + coinRect.height/2);
+                    
+                    clearInterval(coinObj.interval);
+                    coin.parentNode.removeChild(coin);
+                    coins.splice(index, 1);
+                }
+            });
+        }
+        
+        // Create particle effect
+        function createParticles(x, y) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                const dx = (Math.random() - 0.5) * 100;
+                const dy = (Math.random() - 0.5) * 100;
+                particle.style.setProperty('--dx', dx + 'px');
+                particle.style.setProperty('--dy', dy + 'px');
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) {
+                        particle.parentNode.removeChild(particle);
+                    }
+                }, 1500);
+            }
+        }
+        
+        // Game loop
+        function gameLoop() {
+            if (gameRunning) {
+                checkCollisions();
+            }
+        }
+        
+        // Start game
+        function startGame() {
+            gameStarted = true;
+            gameRunning = true;
+            score = 0;
+            lives = 3;
+            cowPosition = 50;
+            gameSpeed = 1200;
+            fallSpeed = 3;
+            currentSpeedMultiplier = 1;
+            
+            scoreElement.textContent = '0';
+            livesElement.textContent = '💎 Lives: 3';
+            speedIndicator.textContent = 'Speed: 1.0x';
+            cow.style.left = '50%';
+            startScreenElement.style.display = 'none';
+            gameOverElement.style.display = 'none';
+            
+            // Clear existing coins
+            coins.forEach(coinObj => {
+                clearInterval(coinObj.interval);
+                if (coinObj.element.parentNode) {
+                    coinObj.element.parentNode.removeChild(coinObj.element);
+                }
+            });
+            coins = [];
+            
+            // Start game loops
+            gameLoopInterval = setInterval(gameLoop, 16);
+            coinSpawnInterval = setInterval(createCoin, gameSpeed);
+        }
+        
+        // End game
+        function endGame() {
+            gameRunning = false;
+            clearInterval(gameLoopInterval);
+            clearInterval(coinSpawnInterval);
+            
+            coins.forEach(coinObj => {
+                clearInterval(coinObj.interval);
+                if (coinObj.element.parentNode) {
+                    coinObj.element.parentNode.removeChild(coinObj.element);
+                }
+            });
+            coins = [];
+            
+            let isNewBest = false;
+            if (score > bestScore) {
+                bestScore = score;
+                bestScoreElement.textContent = bestScore;
+                setCookie('bestScore', bestScore);
+                isNewBest = true;
+            }
+            
+            finalScoreElement.textContent = `Final Score: ${score}`;
+            newBestIndicator.style.display = isNewBest ? 'block' : 'none';
+            gameOverElement.style.display = 'block';
+        }
+        
+        // Restart game
+        function restartGame() {
+            startGame();
+        }
+    </script>
+</body>
+</html>
